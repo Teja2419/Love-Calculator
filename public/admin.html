@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Love Calculator</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#fff8f8,#fff1f1);padding:24px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:18px}
+    .panel{background:white;padding:18px;border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,0.06)}
+    .panel h2{margin-top:0}
+    .small{font-size:13px;color:#6b7280}
+    table{width:100%;border-collapse:collapse}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h2>Admin Dashboard</h2>
+      <div id="stats" class="small">Loading stats...</div>
+
+      <h3 style="margin-top:18px">Leaderboard (anon)</h3>
+      <div class="leaderboard" id="leaderboard">Loading...</div>
+
+      <h3 style="margin-top:18px">Recent submissions</h3>
+      <div id="recent">Loading...</div>
+    </div>
+
+    <div class="panel">
+      <h2>Privacy & Deletion</h2>
+      <p class="small">To delete entries for a pair enter the same names that were used when consenting (server recomputes the hash).</p>
+
+      <label>Name A<input id="delA" type="text"></label>
+      <label>Name B<input id="delB" type="text"></label>
+      <button id="delBtn" class="secondary">Delete records for this pair</button>
+      <div id="delRes" class="small" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+<script>
+async function loadStats(){
+  const s = await fetch('/api/stats').then(r=>r.json());
+  document.getElementById('stats').innerHTML = `
+    <div style="display:flex;gap:18px">
+      <div><div class="small">Total submissions</div><div style="font-size:28px;font-weight:800">${s.overall.total || 0}</div></div>
+      <div><div class="small">Average score</div><div style="font-size:28px;font-weight:800">${Math.round(s.overall.avg_score||0)}</div></div>
+      <div><div class="small">Top matches (>=85)</div><div style="font-size:28px;font-weight:800">${s.overall.top_matches||0}</div></div>
+    </div>
+    <div style="margin-top:12px">${s.byAlgorithm.map(a=>`<div class="small">${a.algorithm}: ${a.cnt} submissions (avg ${Math.round(a.avg_score||0)})</div>`).join('')}</div>
+  `;
+}
+
+async function loadLeaderboard(){
+  const lb = await fetch('/api/leaderboard?limit=10').then(r=>r.json());
+  const wrap = document.getElementById('leaderboard');
+  if(!lb.results || lb.results.length===0){ wrap.innerHTML = '<div class="small">No entries yet</div>'; return; }
+  let html = '<table><thead><tr><th>Rank</th><th>Anon ID</th><th>Avg</th><th>Attempts</th></tr></thead><tbody>';
+  lb.results.forEach((r,i)=> html += `<tr><td>${i+1}</td><td>anon-${r.hashed_id.slice(0,6)}</td><td>${r.avg_score}</td><td>${r.attempts}</td></tr>`)
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+async function loadRecent(){
+  const rec = await fetch('/api/recent?limit=25').then(r=>r.json());
+  const wrap = document.getElementById('recent');
+  if(!rec || rec.length===0){ wrap.innerHTML = '<div class="small">No submissions</div>'; return; }
+  let html = '<table><thead><tr><th>Time</th><th>Anon</th><th>Score</th><th>Alg</th></tr></thead><tbody>';
+  rec.forEach(r=> html += `<tr><td style="white-space:nowrap">${new Date(r.created_at).toLocaleString()}</td><td>anon-${r.hashed_id.slice(0,6)}</td><td>${r.score}</td><td>${r.algorithm}</td></tr>`);
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+document.getElementById('delBtn').addEventListener('click', async ()=>{
+  const a = document.getElementById('delA').value.trim();
+  const b = document.getElementById('delB').value.trim();
+  if(!a && !b){ document.getElementById('delRes').textContent = 'Provide at least one name'; return; }
+  const res = await fetch('/api/delete', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nameA:a,nameB:b})
+  }).then(r=>r.json());
+  document.getElementById('delRes').textContent = `Deleted ${res.deleted||0} records.`;
+  loadStats(); loadLeaderboard(); loadRecent();
+});
+
+async function init(){
+  await loadStats();
+  await loadLeaderboard();
+  await loadRecent();
+}
+init();
+</script>
+</body>
+</html>

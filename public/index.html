@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Love Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card" role="main">
+    <h1>LOVE CALCULATOR</h1>
+
+    <div class="meter-wrap">
+      <div class="meter" id="meter" aria-hidden="true">
+        <div class="score" id="score">0%</div>
+      </div>
+      <div id="verdict" class="verdict">Enter names and calculate</div>
+    </div>
+
+    <form id="calcForm" autocomplete="off">
+      <label>Your name
+        <input id="nameA" name="nameA" type="text" placeholder="e.g. Priya" required />
+      </label>
+
+      <label>Their name
+        <input id="nameB" name="nameB" type="text" placeholder="e.g. Rahul" required />
+      </label>
+
+      <div class="row">
+        <label for="method">Algorithm</label>
+        <select id="method">
+          <option value="compat">Compatibility (recommended)</option>
+          <option value="letters">Letters sum</option>
+          <option value="lucky">Lucky twist</option>
+        </select>
+      </div>
+
+      <div class="consent">
+        <input id="consent" type="checkbox" />
+        <label for="consent">I agree to store an anonymized record (hashed) for leaderboard & stats.</label>
+      </div>
+
+      <div class="controls">
+        <button id="calcBtn" type="submit" class="primary">CALCULATE</button>
+        <button id="clearBtn" type="button" class="secondary">CLEAR</button>
+        <button id="shareBtn" type="button" class="secondary">Share link</button>
+      </div>
+
+      <div id="explain" class="explain">Algorithm: Compatibility (djb2 hash)</div>
+    </form>
+
+    <footer id="privacy" class="footer">
+      <strong>Privacy notice — For fun only.</strong>
+      By opting in you allow us to store an anonymized record (score, algorithm, hashed identifier). We do <em>not</em> store raw names. Data retained up to 90 days.
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
